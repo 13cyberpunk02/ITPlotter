@@ -1,4 +1,6 @@
 using System.Text;
+using FluentValidation;
+using ITPlotter.API.Filters;
 using ITPlotter.Infrastructure;
 using ITPlotter.Domain.Interfaces;
 using ITPlotter.Infrastructure.Services;
@@ -7,7 +9,12 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationFilter>();
+});
+
+builder.Services.AddValidatorsFromAssemblyContaining<ITPlotter.Application.Validators.RegisterRequestValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
