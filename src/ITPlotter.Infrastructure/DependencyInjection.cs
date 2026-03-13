@@ -2,6 +2,7 @@ using ITPlotter.Application.Interfaces;
 using ITPlotter.Application.Services;
 using ITPlotter.Domain.Interfaces;
 using ITPlotter.Infrastructure.Data;
+using ITPlotter.Infrastructure.PdfProcessing;
 using ITPlotter.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -37,6 +38,13 @@ public static class DependencyInjection
         services.AddScoped<DocumentService>();
         services.AddScoped<PrinterService>();
         services.AddScoped<PrintJobService>();
+
+        // PDF optimization pipeline
+        services.AddScoped<FormatDetector>();
+        services.AddScoped<PdfRasterizer>();
+        services.AddScoped<PrintOptimizer>();
+        services.AddScoped<PdfProcessor>();
+        services.AddScoped<DocumentOptimizationService>();
 
         return services;
     }
