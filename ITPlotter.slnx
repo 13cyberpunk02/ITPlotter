@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ITPlotter.API/ITPlotter.API.csproj" />
+    <Project Path="src/ITPlotter.Application/ITPlotter.Application.csproj" />
+    <Project Path="src/ITPlotter.Domain/ITPlotter.Domain.csproj" />
+    <Project Path="src/ITPlotter.Infrastructure/ITPlotter.Infrastructure.csproj" />
+  </Folder>
+</Solution>
