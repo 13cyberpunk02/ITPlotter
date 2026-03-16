@@ -1,0 +1,71 @@
+<div class="auth-page">
+  <div class="auth-card glass-strong">
+    <h1 class="auth-title">ITPlotter</h1>
+    <p class="auth-subtitle">Create a new account</p>
+
+    <form (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input
+            id="firstName"
+            type="text"
+            [(ngModel)]="firstName"
+            name="firstName"
+            placeholder="John"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input
+            id="lastName"
+            type="text"
+            [(ngModel)]="lastName"
+            name="lastName"
+            placeholder="Doe"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="At least 6 characters"
+          required
+          autocomplete="new-password"
+        />
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        @if (loading()) {
+          Creating account...
+        } @else {
+          Create Account
+        }
+      </button>
+    </form>
+
+    <p class="auth-link">
+      Already have an account? <a routerLink="/auth/login">Sign In</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<div class="dashboard">
+  <h1 class="page-title">Dashboard</h1>
+
+  @if (loading()) {
+    <div class="loading">Loading...</div>
+  } @else {
+    <div class="stats-grid">
+      <a routerLink="/printers" class="stat-card glass">
+        <div class="stat-icon stat-icon-blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ printers().length }}</span>
+          <span class="stat-label">Printers</span>
+        </div>
+        <span class="stat-detail">{{ onlinePrinters }} online</span>
+      </a>
+
+      <a routerLink="/documents" class="stat-card glass">
+        <div class="stat-icon stat-icon-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ documents().length }}</span>
+          <span class="stat-label">Documents</span>
+        </div>
+      </a>
+
+      <a routerLink="/print-jobs" class="stat-card glass">
+        <div class="stat-icon stat-icon-green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ printJobs().length }}</span>
+          <span class="stat-label">Print Jobs</span>
+        </div>
+        <span class="stat-detail">{{ activePrintJobs }} active</span>
+      </a>
+    </div>
+
+    <div class="sections-grid">
+      <section class="section-card glass">
+        <h2 class="section-title">Printer Status</h2>
+        @if (printers().length === 0) {
+          <p class="empty-text">No printers configured</p>
+        } @else {
+          <div class="printer-list">
+            @for (printer of printers(); track printer.id) {
+              <div class="printer-row">
+                <div class="printer-info">
+                  <span class="printer-name">{{ printer.name }}</span>
+                  <span class="printer-location">{{ printer.location }}</span>
+                </div>
+                <span class="status-badge" [class]="getStatusClass(printer.status)">
+                  {{ printer.status }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="section-card glass">
+        <h2 class="section-title">Recent Print Jobs</h2>
+        @if (recentJobs.length === 0) {
+          <p class="empty-text">No print jobs yet</p>
+        } @else {
+          <div class="job-list">
+            @for (job of recentJobs; track job.id) {
+              <div class="job-row">
+                <div class="job-info">
+                  <span class="job-name">{{ job.documentName }}</span>
+                  <span class="job-printer">{{ job.printerName }}</span>
+                </div>
+                <span class="status-badge" [class]="getStatusClass(job.status)">
+                  {{ job.status }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+</div>

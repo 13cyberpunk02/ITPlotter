@@ -1,0 +1,74 @@
+<div class="documents-page">
+  <div class="page-header">
+    <h1 class="page-title">Documents</h1>
+    <label class="btn-primary upload-btn">
+      @if (uploading()) {
+        Uploading {{ uploadProgress() }}%
+      } @else {
+        Upload Document
+      }
+      <input
+        type="file"
+        accept=".pdf,.doc,.docx"
+        (change)="onFileSelected($event)"
+        [disabled]="uploading()"
+        hidden
+      />
+    </label>
+  </div>
+
+  @if (uploading()) {
+    <div class="progress-bar glass">
+      <div class="progress-fill" [style.width.%]="uploadProgress()"></div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading">Loading documents...</div>
+  } @else if (documents().length === 0) {
+    <div class="empty-state glass">
+      <p>No documents uploaded yet. Upload a PDF, DOC, or DOCX file to get started.</p>
+    </div>
+  } @else {
+    <div class="document-list">
+      @for (doc of documents(); track doc.id) {
+        <div class="document-card glass">
+          <div class="doc-icon" [class]="getFormatClass(doc.format)">
+            {{ doc.format }}
+          </div>
+          <div class="doc-info">
+            <span class="doc-name">{{ doc.originalFileName }}</span>
+            <span class="doc-meta">
+              {{ doc.fileSize | fileSize }} &middot;
+              {{ doc.uploadedAt | date:'medium' }}
+            </span>
+          </div>
+          <div class="doc-actions">
+            @if (doc.format === 'Pdf') {
+              <button class="btn-sm btn-outline" (click)="optimize(doc)"
+                      [disabled]="optimizing() === doc.id">
+                @if (optimizing() === doc.id) { Optimizing... } @else { Optimize }
+              </button>
+            }
+            <button class="btn-sm btn-outline" (click)="download(doc)">
+              Download
+            </button>
+            <button class="btn-sm btn-danger-outline" (click)="confirmDelete(doc)">
+              Delete
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (deleteTarget()) {
+  <app-confirm-dialog
+    title="Delete Document"
+    [message]="'Are you sure you want to delete ' + deleteTarget()!.originalFileName + '?'"
+    confirmLabel="Delete"
+    (confirmed)="deleteDocument()"
+    (cancelled)="deleteTarget.set(null)"
+  />
+}
