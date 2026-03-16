@@ -1,59 +1,93 @@
-# Client
+# ITPlotter Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
+Angular-клиент для системы мониторинга печати с glassmorphism UI и поддержкой тёмной темы.
 
-## Development server
+## Стек технологий
 
-To start a local development server, run:
+- **Angular 21** (standalone components, signals, new control flow)
+- **Tailwind CSS 4** + кастомные CSS-переменные
+- **RxJS** — реактивное взаимодействие с API
+- **TypeScript 5.9**
 
-```bash
-ng serve
+## Структура проекта
+
+```
+src/app/
+├── core/
+│   ├── guards/          # authGuard, guestGuard
+│   ├── interceptors/    # JWT-интерсептор с автообновлением токена
+│   ├── models/          # TypeScript-интерфейсы (auth, printer, document, print-job)
+│   └── services/        # HTTP-сервисы для работы с API
+├── features/
+│   ├── auth/
+│   │   ├── login/       # Страница входа
+│   │   └── register/    # Страница регистрации
+│   ├── dashboard/       # Дашборд со статистикой и статусами
+│   ├── documents/       # Управление документами (загрузка, скачивание, оптимизация)
+│   ├── layout/          # Боковая панель навигации
+│   ├── print-jobs/      # Задания печати (создание, отмена, отслеживание)
+│   └── printers/        # Управление принтерами (добавление, удаление, мониторинг)
+└── shared/
+    ├── components/      # Toast, ConfirmDialog, ThemeToggle
+    └── pipes/           # FileSizePipe
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Функциональность
 
-## Code scaffolding
+### Аутентификация
+- Вход и регистрация
+- JWT токены с автообновлением при истечении
+- Защита маршрутов (authGuard / guestGuard)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Дашборд
+- Карточки со статистикой: принтеры, документы, задания печати
+- Список статусов принтеров
+- Последние задания печати
 
-```bash
-ng generate component component-name
-```
+### Принтеры
+- Карточки с информацией о принтере (тип, статус, расположение)
+- Индикаторы уровней: тонер, чернила, бумага
+- Синхронизация статуса с CUPS
+- Добавление / удаление принтеров
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Документы
+- Загрузка файлов (PDF, DOC, DOCX) с прогресс-баром
+- Скачивание документов
+- Оптимизация PDF для плоттерной печати
+- Удаление с подтверждением
 
-```bash
-ng generate --help
-```
+### Задания печати
+- Создание задания: выбор документа, принтера, формата бумаги, количество копий
+- Таблица с фильтрацией по статусу
+- Обновление статуса и отмена задания
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Запуск
 
 ```bash
-ng e2e
+cd client
+npm install
+npm start
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Приложение будет доступно на `http://localhost:4200`.
 
-## Additional Resources
+По умолчанию клиент обращается к API по адресу `http://localhost:5000/api` (настраивается в `src/environments/environment.ts`).
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Сборка
+
+```bash
+npm run build
+```
+
+Результат сборки — `dist/client/`.
+
+## Темы оформления
+
+Поддерживается светлая и тёмная тема. Переключение через кнопку в боковой панели. Используется glassmorphism-дизайн с `backdrop-filter: blur()` и полупрозрачными фонами.
+
+## Конфигурация окружений
+
+| Файл | API URL |
+|------|---------|
+| `src/environments/environment.ts` | `http://localhost:5000/api` |
+| `src/environments/environment.prod.ts` | `http://localhost:5000/api` |
