@@ -5,7 +5,9 @@ using ITPlotter.Infrastructure;
 using ITPlotter.Domain.Interfaces;
 using ITPlotter.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using ITPlotter.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +54,9 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
     var storage = scope.ServiceProvider.GetRequiredService<IStorageService>();
     if (storage is MinioStorageService minioStorage)
         await minioStorage.EnsureBucketExistsAsync();
