@@ -1,0 +1,140 @@
+<div class="printers-page">
+  <div class="page-header">
+    <h1 class="page-title">Printers</h1>
+    <button class="btn-primary" (click)="showAddForm.set(!showAddForm())">
+      @if (showAddForm()) { Cancel } @else { Add Printer }
+    </button>
+  </div>
+
+  @if (showAddForm()) {
+    <div class="add-form glass">
+      <h3 class="form-title">Add New Printer</h3>
+      <form (ngSubmit)="addPrinter()" class="form-grid">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input id="name" type="text" [(ngModel)]="newPrinter.name" name="name" placeholder="Office Printer" required />
+        </div>
+        <div class="form-group">
+          <label for="cupsName">CUPS Name</label>
+          <input id="cupsName" type="text" [(ngModel)]="newPrinter.cupsName" name="cupsName" placeholder="office-printer" required />
+        </div>
+        <div class="form-group">
+          <label for="deviceUri">Device URI</label>
+          <input id="deviceUri" type="text" [(ngModel)]="newPrinter.deviceUri" name="deviceUri" placeholder="ipp://192.168.1.100/ipp/print" />
+        </div>
+        <div class="form-group">
+          <label for="driverUri">Driver URI</label>
+          <input id="driverUri" type="text" [(ngModel)]="newPrinter.driverUri" name="driverUri" placeholder="everywhere" />
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input id="location" type="text" [(ngModel)]="newPrinter.location" name="location" placeholder="Room 101" />
+        </div>
+        <div class="form-group">
+          <label for="type">Type</label>
+          <select id="type" [(ngModel)]="newPrinter.type" name="type">
+            @for (t of printerTypes; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="format">Max Paper Format</label>
+          <select id="format" [(ngModel)]="newPrinter.maxPaperFormat" name="maxPaperFormat">
+            @for (f of paperFormats; track f) {
+              <option [value]="f">{{ f }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Add Printer</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading">Loading printers...</div>
+  } @else if (printers().length === 0) {
+    <div class="empty-state glass">
+      <p>No printers configured yet. Add one to get started.</p>
+    </div>
+  } @else {
+    <div class="printer-grid">
+      @for (printer of printers(); track printer.id) {
+        <div class="printer-card glass">
+          <div class="printer-header">
+            <div>
+              <h3 class="printer-name">{{ printer.name }}</h3>
+              <span class="printer-cups">{{ printer.cupsName }}</span>
+            </div>
+            <span class="status-badge" [class]="getStatusClass(printer.status)">
+              {{ printer.status }}
+            </span>
+          </div>
+
+          <div class="printer-details">
+            <div class="detail-row">
+              <span class="detail-label">Location</span>
+              <span class="detail-value">{{ printer.location }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Type</span>
+              <span class="detail-value">{{ printer.type }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Max Format</span>
+              <span class="detail-value">{{ printer.maxPaperFormat }}</span>
+            </div>
+            @if (printer.tonerLevelPercent !== null) {
+              <div class="detail-row">
+                <span class="detail-label">Toner</span>
+                <div class="level-bar">
+                  <div class="level-fill" [style.width.%]="printer.tonerLevelPercent"
+                       [class.level-low]="printer.tonerLevelPercent < 20"></div>
+                </div>
+                <span class="level-text">{{ printer.tonerLevelPercent }}%</span>
+              </div>
+            }
+            @if (printer.inkLevelPercent !== null) {
+              <div class="detail-row">
+                <span class="detail-label">Ink</span>
+                <div class="level-bar">
+                  <div class="level-fill" [style.width.%]="printer.inkLevelPercent"
+                       [class.level-low]="printer.inkLevelPercent < 20"></div>
+                </div>
+                <span class="level-text">{{ printer.inkLevelPercent }}%</span>
+              </div>
+            }
+            @if (printer.paperRemaining !== null) {
+              <div class="detail-row">
+                <span class="detail-label">Paper</span>
+                <span class="detail-value">{{ printer.paperRemaining }} sheets</span>
+              </div>
+            }
+          </div>
+
+          <div class="printer-actions">
+            <button class="btn-sm btn-outline" (click)="syncStatus(printer)"
+                    [disabled]="syncing() === printer.id">
+              @if (syncing() === printer.id) { Syncing... } @else { Sync Status }
+            </button>
+            <button class="btn-sm btn-danger-outline" (click)="confirmDelete(printer)">
+              Delete
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (deleteTarget()) {
+  <app-confirm-dialog
+    title="Delete Printer"
+    [message]="'Are you sure you want to delete ' + deleteTarget()!.name + '?'"
+    confirmLabel="Delete"
+    (confirmed)="deletePrinter()"
+    (cancelled)="deleteTarget.set(null)"
+  />
+}
