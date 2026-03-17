@@ -57,8 +57,29 @@ public class CupsApiService : ICupsService
         var response = await _http.PostAsync($"/printers/{Uri.EscapeDataString(printerName)}/print", content, ct);
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
-        return result.GetProperty("jobId").GetInt32();
+        var body = await response.Content.ReadAsStringAsync(ct);
+
+        // Try JSON first
+        if (!string.IsNullOrWhiteSpace(body) && body.TrimStart().StartsWith('{'))
+        {
+            try
+            {
+                var json = JsonSerializer.Deserialize<JsonElement>(body);
+                if (json.TryGetProperty("jobId", out var jobIdProp))
+                    return jobIdProp.GetInt32();
+                if (json.TryGetProperty("job-id", out var jobIdProp2))
+                    return jobIdProp2.GetInt32();
+            }
+            catch (JsonException) { /* fall through */ }
+        }
+
+        // Try to extract job ID from text/HTML (e.g. "Job 123 created")
+        var match = System.Text.RegularExpressions.Regex.Match(body, @"[Jj]ob[^\d]*(\d+)");
+        if (match.Success && int.TryParse(match.Groups[1].Value, out var extractedJobId))
+            return extractedJobId;
+
+        // CUPS returned 200 — job was accepted, return 0 as fallback
+        return 0;
     }
 
     public async Task<CupsJobInfo?> GetJobStatusAsync(int jobId, CancellationToken ct = default)
