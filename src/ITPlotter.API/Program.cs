@@ -61,6 +61,22 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
 
+    // Seed default admin user if no admins exist
+    if (!await db.Users.AnyAsync(u => u.Role == ITPlotter.Domain.Enums.UserRole.Admin))
+    {
+        db.Users.Add(new ITPlotter.Domain.Entities.User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Admin",
+            LastName = "Admin",
+            Email = "admin@itplotter.local",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"),
+            Role = ITPlotter.Domain.Enums.UserRole.Admin,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+
     var storage = scope.ServiceProvider.GetRequiredService<IStorageService>();
     if (storage is MinioStorageService minioStorage)
         await minioStorage.EnsureBucketExistsAsync();
