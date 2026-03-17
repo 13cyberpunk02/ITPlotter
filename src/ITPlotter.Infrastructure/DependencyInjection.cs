@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<DocumentService>();
         services.AddScoped<PrinterService>();
         services.AddScoped<PrintJobService>();
+        services.AddScoped<ITPlotter.Infrastructure.Services.AutoPrintService>();
 
         // PDF optimization pipeline
         services.AddScoped<FormatDetector>();

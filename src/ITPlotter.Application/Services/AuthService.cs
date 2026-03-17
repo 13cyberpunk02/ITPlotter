@@ -78,7 +78,7 @@ public class AuthService
         var user = await _db.Users.FindAsync([userId], ct)
             ?? throw new KeyNotFoundException("Пользователь не найден.");
 
-        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email, user.PhotoPath);
+        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email, user.PhotoPath, user.Role);
     }
 
     private async Task<AuthResponse> GenerateTokens(User user, CancellationToken ct)
@@ -92,7 +92,8 @@ public class AuthService
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.GivenName, user.FirstName),
-            new Claim(ClaimTypes.Surname, user.LastName)
+            new Claim(ClaimTypes.Surname, user.LastName),
+            new Claim(ClaimTypes.Role, user.Role.ToString())
         };
 
         var token = new JwtSecurityToken(

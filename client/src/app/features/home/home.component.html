@@ -1,0 +1,111 @@
+<div class="home">
+  <h1 class="title">Печать документов</h1>
+  <p class="subtitle">Загрузите PDF файл — программа сама определит форматы страниц и отправит на нужные принтеры</p>
+
+  @switch (state()) {
+    @case ('idle') {
+      <div
+        class="drop-zone glass-strong"
+        [class.drag-over]="dragOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="12" y2="12"/>
+            <line x1="15" y1="15" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <p class="drop-text">Перетащите PDF файл сюда</p>
+        <p class="drop-hint">или</p>
+        <label class="select-btn">
+          Выберите файл
+          <input type="file" accept=".pdf" (change)="onFileSelected($event)" hidden />
+        </label>
+      </div>
+    }
+
+    @case ('uploading') {
+      <div class="status-card glass-strong">
+        <div class="spinner"></div>
+        <p class="status-text">{{ statusMessage() }}</p>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="uploadProgress()"></div>
+        </div>
+        <span class="progress-text">{{ uploadProgress() }}%</span>
+      </div>
+    }
+
+    @case ('processing') {
+      <div class="status-card glass-strong">
+        <div class="spinner"></div>
+        <p class="status-text">{{ statusMessage() }}</p>
+        <p class="status-hint">Определение форматов, оптимизация и отправка на печать...</p>
+      </div>
+    }
+
+    @case ('done') {
+      <div class="result-card glass-strong">
+        <div class="result-icon success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <h2 class="result-title">{{ statusMessage() }}</h2>
+
+        @if (lastResult(); as result) {
+          <div class="result-details">
+            <div class="result-row">
+              <span class="result-label">Документ</span>
+              <span class="result-value">{{ result.documentName }}</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Страниц обработано</span>
+              <span class="result-value">{{ result.totalPages }}</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Заданий печати</span>
+              <span class="result-value">{{ result.jobsCreated }}</span>
+            </div>
+            @if (result.unmatchedPages > 0) {
+              <div class="result-row warning">
+                <span class="result-label">Не найден принтер</span>
+                <span class="result-value">{{ result.unmatchedPages }} стр.</span>
+              </div>
+            }
+            @if (result.jobs.length > 0) {
+              <div class="jobs-list">
+                @for (job of result.jobs; track job.jobId) {
+                  <div class="job-chip">
+                    {{ job.paperFormat }} &rarr; {{ job.printerName }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <button class="select-btn" (click)="reset()">Напечатать ещё</button>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="result-card glass-strong">
+        <div class="result-icon error-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <h2 class="result-title">{{ statusMessage() }}</h2>
+        <button class="select-btn" (click)="reset()">Попробовать снова</button>
+      </div>
+    }
+  }
+</div>
