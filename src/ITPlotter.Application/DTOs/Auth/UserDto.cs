@@ -1,3 +1,5 @@
+using ITPlotter.Domain.Enums;
+
 namespace ITPlotter.Application.DTOs.Auth;
 
 public record UserDto(
@@ -5,4 +7,5 @@ public record UserDto(
     string FirstName,
     string LastName,
     string Email,
-    string? PhotoPath);
+    string? PhotoPath,
+    UserRole Role);

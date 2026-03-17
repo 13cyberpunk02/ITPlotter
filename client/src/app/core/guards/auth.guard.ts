@@ -18,6 +18,16 @@ export const guestGuard: CanActivateFn = () => {
 
   if (!auth.getToken()) return true;
 
-  router.navigate(['/dashboard']);
+  router.navigate(['/']);
+  return false;
+};
+
+export const adminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.user()?.role === 'Admin') return true;
+
+  router.navigate(['/']);
   return false;
 };

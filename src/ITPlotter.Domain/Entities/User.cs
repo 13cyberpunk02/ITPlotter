@@ -1,3 +1,5 @@
+using ITPlotter.Domain.Enums;
+
 namespace ITPlotter.Domain.Entities;
 
 public class User
@@ -8,6 +10,7 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string? PhotoPath { get; set; }
+    public UserRole Role { get; set; } = UserRole.User;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];

@@ -1,0 +1,63 @@
+<div class="stats">
+  <h1 class="title">Статистика печати</h1>
+
+  @if (loading()) {
+    <div class="loading-card glass-strong">
+      <div class="spinner"></div>
+      <p class="loading-text">Загрузка статистики...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-card glass-strong">
+      <p class="error-text">Не удалось загрузить статистику</p>
+    </div>
+  } @else if (stats(); as s) {
+    <div class="summary-row">
+      <div class="summary-card glass-strong">
+        <span class="summary-value">{{ s.totalJobs }}</span>
+        <span class="summary-label">Заданий печати</span>
+      </div>
+      <div class="summary-card glass-strong">
+        <span class="summary-value">{{ s.totalPages }}</span>
+        <span class="summary-label">Страниц напечатано</span>
+      </div>
+    </div>
+
+    @if (s.byFormat.length > 0) {
+      <div class="section glass-strong">
+        <h2 class="section-title">По форматам</h2>
+        <div class="format-list">
+          @for (f of s.byFormat; track f.format) {
+            <div class="format-row">
+              <span class="format-name">{{ f.format }}</span>
+              <div class="format-bar-track">
+                <div
+                  class="format-bar-fill"
+                  [style.width.%]="(f.pages / s.totalPages) * 100"
+                ></div>
+              </div>
+              <span class="format-count">{{ f.pages }} стр.</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (s.recent.length > 0) {
+      <div class="section glass-strong">
+        <h2 class="section-title">Последние дни</h2>
+        <div class="chart">
+          @for (day of s.recent; track day.date) {
+            <div class="chart-col">
+              <span class="chart-value">{{ day.pages }}</span>
+              <div
+                class="chart-bar"
+                [style.height.%]="(day.pages / maxRecentPages()) * 100"
+              ></div>
+              <span class="chart-label">{{ formatDate(day.date) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>
