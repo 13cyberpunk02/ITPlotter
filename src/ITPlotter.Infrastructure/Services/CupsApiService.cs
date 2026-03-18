@@ -188,6 +188,26 @@ public class CupsApiService : ICupsService
         PaperFormat.A2 => "iso_a2_420x594mm",
         PaperFormat.A1 => "iso_a1_594x841mm",
         PaperFormat.A0 => "iso_a0_841x1189mm",
+        // Extended formats — custom media with exact dimensions
+        PaperFormat.A4x3 => "custom_297x630mm_297x630mm",
+        PaperFormat.A4x4 => "custom_297x841mm_297x841mm",
+        PaperFormat.A4x5 => "custom_297x1051mm_297x1051mm",
+        PaperFormat.A4x6 => "custom_297x1261mm_297x1261mm",
+        PaperFormat.A4x7 => "custom_297x1471mm_297x1471mm",
+        PaperFormat.A4x8 => "custom_297x1682mm_297x1682mm",
+        PaperFormat.A4x9 => "custom_297x1892mm_297x1892mm",
+        PaperFormat.A3x3 => "custom_420x891mm_420x891mm",
+        PaperFormat.A3x4 => "custom_420x1189mm_420x1189mm",
+        PaperFormat.A3x5 => "custom_420x1486mm_420x1486mm",
+        PaperFormat.A3x6 => "custom_420x1783mm_420x1783mm",
+        PaperFormat.A3x7 => "custom_420x2080mm_420x2080mm",
+        PaperFormat.A2x3 => "custom_594x1261mm_594x1261mm",
+        PaperFormat.A2x4 => "custom_594x1682mm_594x1682mm",
+        PaperFormat.A2x5 => "custom_594x2102mm_594x2102mm",
+        PaperFormat.A1x3 => "custom_841x1783mm_841x1783mm",
+        PaperFormat.A1x4 => "custom_841x2378mm_841x2378mm",
+        PaperFormat.A0x2 => "custom_1189x1682mm_1189x1682mm",
+        PaperFormat.A0x3 => "custom_1189x2523mm_1189x2523mm",
         _ => "iso_a4_210x297mm"
     };
 
