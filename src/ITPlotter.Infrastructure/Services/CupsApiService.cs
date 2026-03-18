@@ -107,8 +107,21 @@ public class CupsApiService : ICupsService
                 await fileStream.CopyToAsync(fs, ct);
             }
 
-            var cupsMedia = PaperFormatToCupsMedia(options.PaperFormat);
-            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={cupsMedia} -o fit-to-page -t \"{fileName}\" {tempFile}";
+            // Если заданы реальные размеры оптимизированного PDF — используем custom media
+            // Это важно для рулонных плоттеров: PDF уже повёрнут/склеен оптимизатором
+            string cupsMedia;
+            if (options.WidthMm.HasValue && options.LengthMm.HasValue)
+            {
+                var w = (int)Math.Ceiling(options.WidthMm.Value);
+                var l = (int)Math.Ceiling(options.LengthMm.Value);
+                cupsMedia = $"custom_{w}x{l}mm";
+            }
+            else
+            {
+                cupsMedia = PaperFormatToCupsMedia(options.PaperFormat);
+            }
+
+            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={cupsMedia} -o fit-to-page -o position=center -t \"{fileName}\" {tempFile}";
             var (exitCode, output) = await RunCommandAsync("lp", args, ct);
 
             if (exitCode != 0)

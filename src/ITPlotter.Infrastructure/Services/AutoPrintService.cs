@@ -77,7 +77,13 @@ public class AutoPrintService
 
             var cupsJobId = await _cups.PrintFileAsync(
                 printer.CupsName, fileStream, file.FileName,
-                new PrintJobOptions { Copies = 1, PaperFormat = requiredFormat }, ct);
+                new PrintJobOptions
+                {
+                    Copies = 1,
+                    PaperFormat = requiredFormat,
+                    WidthMm = file.ResultWidthMm,
+                    LengthMm = file.ResultLengthMm
+                }, ct);
 
             var printJob = new PrintJob
             {
