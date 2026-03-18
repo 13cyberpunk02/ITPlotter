@@ -5,6 +5,7 @@ using ITPlotter.Domain.Interfaces;
 using ITPlotter.Infrastructure.PdfProcessing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using DomainPaperFormat = ITPlotter.Domain.PaperOptimization.PaperFormat;
 
 namespace ITPlotter.Infrastructure.Services;
 
@@ -62,7 +63,7 @@ public class AutoPrintService
         foreach (var file in optimizationResult.OptimizedFiles)
         {
             var requiredFormat = DetectPaperFormat(file);
-            var printer = FindBestPrinter(printers, requiredFormat);
+            var printer = FindBestPrinter(printers, requiredFormat, file);
 
             if (printer == null)
             {
@@ -116,11 +117,17 @@ public class AutoPrintService
 
     private static PaperFormat DetectPaperFormat(OptimizedFileInfo file)
     {
-        // Определяем формат бумаги по размерам из оптимизатора
+        // Используем класс PaperOptimization.PaperFormat для точного определения формата
+        // по размерам оптимизированного файла
+        var (domainFormat, _) = DomainPaperFormat.FindClosestFormat(file.ResultWidthMm, file.ResultLengthMm);
+
+        if (domainFormat != null && Enum.TryParse<PaperFormat>(domainFormat.Name, out var enumFormat))
+            return enumFormat;
+
+        // Fallback по размерам для нестандартных результатов оптимизации
         double maxDim = Math.Max(file.ResultWidthMm, file.ResultLengthMm);
         double minDim = Math.Min(file.ResultWidthMm, file.ResultLengthMm);
 
-        // Стандартные размеры ISO A-серии (ширина x высота в мм)
         if (minDim <= 220 && maxDim <= 310) return PaperFormat.A4;
         if (minDim <= 310 && maxDim <= 440) return PaperFormat.A3;
         if (minDim <= 440 && maxDim <= 630) return PaperFormat.A2;
@@ -128,16 +135,29 @@ public class AutoPrintService
         return PaperFormat.A0;
     }
 
-    private static Printer? FindBestPrinter(List<Printer> printers, PaperFormat requiredFormat)
+    /// <summary>
+    /// Минимальная ширина рулона (мм), необходимая для данного формата.
+    /// </summary>
+    private static double GetMinRollWidthMm(PaperFormat format)
     {
-        // Ищем принтер с подходящим форматом
-        // Для больших форматов (A2+) предпочитаем плоттер
-        // Предпочитаем Idle, затем минимальный подходящий формат
+        var domainFormat = DomainPaperFormat.KnownFormats.FirstOrDefault(f => f.Name == format.ToString());
+        if (domainFormat == null) return 914;
+        return Math.Min(domainFormat.WidthMm, domainFormat.HeightMm);
+    }
+
+    private static Printer? FindBestPrinter(List<Printer> printers, PaperFormat requiredFormat, OptimizedFileInfo file)
+    {
+        // Реальная ширина на рулоне определяется из оптимизированного файла
+        double neededWidthMm = file.ResultWidthMm;
+
+        // Для стандартных форматов (A4, A3) предпочитаем обычный принтер
+        bool isSmallFormat = requiredFormat is PaperFormat.A4 or PaperFormat.A3;
+
         return printers
-            .Where(p => p.MaxPaperFormat >= requiredFormat)
             .OrderBy(p => p.Status == PrinterStatus.Idle ? 0 : 1)
-            .ThenBy(p => requiredFormat >= PaperFormat.A2 && p.Type == PrinterType.Plotter ? 0 : 1)
-            .ThenBy(p => p.MaxPaperFormat - requiredFormat)
+            .ThenBy(p => isSmallFormat
+                ? (p.Type == PrinterType.Printer ? 0 : 1)
+                : (p.Type == PrinterType.Plotter ? 0 : 1))
             .FirstOrDefault();
     }
 }
