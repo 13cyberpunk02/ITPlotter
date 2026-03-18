@@ -42,6 +42,8 @@ services:
       - Minio__AccessKey=minioadmin
       - Minio__SecretKey=minioadmin
       - Cups__BaseUrl=http://cups:631
+      - Cups__User=print
+      - Cups__Password=print
     depends_on:
       - postgres
       - minio
