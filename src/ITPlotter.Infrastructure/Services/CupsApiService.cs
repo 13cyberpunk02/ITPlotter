@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using ITPlotter.Domain.Enums;
 using ITPlotter.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -106,7 +107,8 @@ public class CupsApiService : ICupsService
                 await fileStream.CopyToAsync(fs, ct);
             }
 
-            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -t \"{fileName}\" {tempFile}";
+            var cupsMedia = PaperFormatToCupsMedia(options.PaperFormat);
+            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={cupsMedia} -o fit-to-page -t \"{fileName}\" {tempFile}";
             var (exitCode, output) = await RunCommandAsync("lp", args, ct);
 
             if (exitCode != 0)
@@ -178,6 +180,16 @@ public class CupsApiService : ICupsService
         if (exitCode != 0)
             _logger.LogWarning("Не удалось отменить задание {JobId}: {Output}", jobId, output);
     }
+
+    private static string PaperFormatToCupsMedia(PaperFormat format) => format switch
+    {
+        PaperFormat.A4 => "iso_a4_210x297mm",
+        PaperFormat.A3 => "iso_a3_297x420mm",
+        PaperFormat.A2 => "iso_a2_420x594mm",
+        PaperFormat.A1 => "iso_a1_594x841mm",
+        PaperFormat.A0 => "iso_a0_841x1189mm",
+        _ => "iso_a4_210x297mm"
+    };
 
     private static async Task<(int ExitCode, string Output)> RunCommandAsync(
         string command, string arguments, CancellationToken ct)
