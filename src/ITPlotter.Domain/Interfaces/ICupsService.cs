@@ -36,4 +36,13 @@ public class PrintJobOptions
 {
     public int Copies { get; set; } = 1;
     public PaperFormat PaperFormat { get; set; } = PaperFormat.A4;
+    /// <summary>
+    /// Ширина оптимизированного PDF в мм (по ширине рулона).
+    /// Если задано — используется custom media вместо стандартного формата.
+    /// </summary>
+    public double? WidthMm { get; set; }
+    /// <summary>
+    /// Длина оптимизированного PDF в мм (расход рулона).
+    /// </summary>
+    public double? LengthMm { get; set; }
 }
