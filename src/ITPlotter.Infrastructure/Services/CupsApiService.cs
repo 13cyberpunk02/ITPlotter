@@ -9,8 +9,6 @@ namespace ITPlotter.Infrastructure.Services;
 public class CupsApiService : ICupsService
 {
     private readonly string _cupsServer;
-    private readonly string _cupsUser;
-    private readonly string _cupsPassword;
     private readonly ILogger<CupsApiService> _logger;
 
     public CupsApiService(HttpClient http, IConfiguration configuration, ILogger<CupsApiService> logger)
@@ -18,8 +16,6 @@ public class CupsApiService : ICupsService
         var baseUrl = configuration["Cups:BaseUrl"] ?? "http://cups:631";
         var uri = new Uri(baseUrl);
         _cupsServer = $"{uri.Host}:{uri.Port}";
-        _cupsUser = configuration["Cups:User"] ?? "print";
-        _cupsPassword = configuration["Cups:Password"] ?? "print";
         _logger = logger;
     }
 
@@ -85,7 +81,7 @@ public class CupsApiService : ICupsService
         var driver = string.IsNullOrWhiteSpace(driverUri) ? "everywhere" : driverUri;
         var args = $"-h {_cupsServer} -p {printerName} -v {deviceUri} -m {driver} -E";
 
-        var (exitCode, output) = await RunCommandAsync("lpadmin", args, ct, cupsAuth: true);
+        var (exitCode, output) = await RunCommandAsync("lpadmin", args, ct);
         if (exitCode != 0)
             throw new InvalidOperationException($"Не удалось добавить принтер в CUPS: {output}");
 
@@ -94,7 +90,7 @@ public class CupsApiService : ICupsService
 
     public async Task RemovePrinterAsync(string printerName, CancellationToken ct = default)
     {
-        var (exitCode, output) = await RunCommandAsync("lpadmin", $"-h {_cupsServer} -x {printerName}", ct, cupsAuth: true);
+        var (exitCode, output) = await RunCommandAsync("lpadmin", $"-h {_cupsServer} -x {printerName}", ct);
         if (exitCode != 0)
             _logger.LogWarning("Не удалось удалить принтер {Printer} из CUPS: {Output}", printerName, output);
     }
@@ -183,26 +179,21 @@ public class CupsApiService : ICupsService
             _logger.LogWarning("Не удалось отменить задание {JobId}: {Output}", jobId, output);
     }
 
-    private async Task<(int ExitCode, string Output)> RunCommandAsync(
-        string command, string arguments, CancellationToken ct, bool cupsAuth = false)
+    private static async Task<(int ExitCode, string Output)> RunCommandAsync(
+        string command, string arguments, CancellationToken ct)
     {
-        var startInfo = new ProcessStartInfo
+        using var process = new Process
         {
-            FileName = command,
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
         };
-
-        if (cupsAuth)
-        {
-            startInfo.Environment["CUPS_USER"] = _cupsUser;
-            startInfo.Environment["CUPS_PASSWORD"] = _cupsPassword;
-        }
-
-        using var process = new Process { StartInfo = startInfo };
         process.Start();
 
         var stdout = await process.StandardOutput.ReadToEndAsync(ct);
