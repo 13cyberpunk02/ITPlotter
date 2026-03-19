@@ -45,4 +45,8 @@ public class PrintJobOptions
     /// Длина оптимизированного PDF в мм (расход рулона).
     /// </summary>
     public double? LengthMm { get; set; }
+    /// <summary>
+    /// Печать на рулонном плоттере — добавляет media-source=roll.
+    /// </summary>
+    public bool IsRollPaper { get; set; }
 }
