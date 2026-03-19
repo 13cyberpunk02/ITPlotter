@@ -136,50 +136,69 @@ public class PdfProcessor
     {
         var doc = job.SourceDocuments.First();
         using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
-        using var output = new PdfDocument();
         var sourcePage = sourceDoc.Pages[doc.PageIndex];
 
         double wPt = sourcePage.Width.Point;
         double hPt = sourcePage.Height.Point;
         int rot = sourcePage.Rotate;
 
-        // Определяем эффективную ориентацию с учётом текущего Rotate
-        bool isEffectiveLandscape = (rot == 90 || rot == 270) ? hPt > wPt : wPt > hPt;
+        // Визуальные размеры с учётом Rotate
+        var (visW, visH) = GetVisualSize(wPt, hPt, rot);
 
-        if (isEffectiveLandscape)
+        // Определяем: визуально ландшафт или портрет
+        bool isVisualLandscape = visW > visH;
+
+        // Целевые размеры выходной страницы: длинная сторона = ширина (ландшафт)
+        double targetW = Math.Max(visW, visH); // длинная сторона по ширине
+        double targetH = Math.Min(visW, visH); // короткая сторона по высоте
+
+        // Если физические размеры уже совпадают с целевыми и Rotate=0 — копируем
+        if (Math.Abs(wPt - targetW) < 1 && Math.Abs(hPt - targetH) < 1 && rot == 0)
         {
-            // Уже ландшафт — копируем как есть
+            using var output = new PdfDocument();
             output.AddPage(sourcePage);
+            output.Save(outputPath);
+            return;
         }
-        else
-        {
-            // Портрет → рисуем на новую страницу с поменянными W/H
-            // Так драйвер плоттера видит реальные размеры страницы
-            var (visW, visH) = GetVisualSize(wPt, hPt, rot);
-            var newPage = output.AddPage();
-            newPage.Width = new XUnit(visH, XGraphicsUnit.Point);  // длинная сторона = ширина
-            newPage.Height = new XUnit(visW, XGraphicsUnit.Point); // короткая = высота
 
-            string tempPath = Path.Combine(Path.GetTempPath(), $"rot_{Guid.NewGuid():N}.pdf");
-            try
+        // Создаём новую страницу с физическими ландшафтными размерами
+        // и перерисовываем содержимое — чтобы драйвер плоттера видел реальные W > H
+        string tempPath = Path.Combine(Path.GetTempPath(), $"rot_{Guid.NewGuid():N}.pdf");
+        try
+        {
+            // Сохраняем исходную страницу без Rotate для использования как XPdfForm
+            using (var tempDoc = new PdfDocument())
             {
-                using var tempDoc = new PdfDocument();
                 var tp = tempDoc.AddPage(sourcePage);
                 tp.Rotate = 0;
                 tempDoc.Save(tempPath);
-
-                using var form = XPdfForm.FromFile(tempPath);
-                using var gfx = XGraphics.FromPdfPage(newPage);
-                DrawFormWithRotation(gfx, form, (rot + 90) % 360,
-                    0, 0, newPage.Width.Point, newPage.Height.Point);
             }
-            finally
+
+            using var output = new PdfDocument();
+            var newPage = output.AddPage();
+            newPage.Width = new XUnit(targetW, XGraphicsUnit.Point);
+            newPage.Height = new XUnit(targetH, XGraphicsUnit.Point);
+
+            using var form = XPdfForm.FromFile(tempPath);
+            using var gfx = XGraphics.FromPdfPage(newPage);
+
+            if (isVisualLandscape)
             {
-                TryDelete(tempPath);
+                // Визуально уже ландшафт — рисуем с учётом оригинального Rotate
+                DrawFormWithRotation(gfx, form, rot, 0, 0, targetW, targetH);
             }
-        }
+            else
+            {
+                // Визуально портрет — поворачиваем на 90°
+                DrawFormWithRotation(gfx, form, (rot + 90) % 360, 0, 0, targetW, targetH);
+            }
 
-        output.Save(outputPath);
+            output.Save(outputPath);
+        }
+        finally
+        {
+            TryDelete(tempPath);
+        }
     }
 
     private void CreateSideBySidePdf(PlotterPrintJob job, string outputPath, string tempDir)
