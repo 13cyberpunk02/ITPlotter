@@ -1,45 +1,45 @@
 <div class="printers-page">
   <div class="page-header">
-    <h1 class="page-title">Printers</h1>
+    <h1 class="page-title">Принтеры</h1>
     <button class="btn-primary" (click)="showAddForm.set(!showAddForm())">
-      @if (showAddForm()) { Cancel } @else { Add Printer }
+      @if (showAddForm()) { Отмена } @else { Добавить принтер }
     </button>
   </div>
 
   @if (showAddForm()) {
     <div class="add-form glass">
-      <h3 class="form-title">Add New Printer</h3>
+      <h3 class="form-title">Добавить новый принтер</h3>
       <form (ngSubmit)="addPrinter()" class="form-grid">
         <div class="form-group">
-          <label for="name">Name</label>
-          <input id="name" type="text" [(ngModel)]="newPrinter.name" name="name" placeholder="Office Printer" required />
+          <label for="name">Название</label>
+          <input id="name" type="text" [(ngModel)]="newPrinter.name" name="name" placeholder="Офисный принтер" required />
         </div>
         <div class="form-group">
-          <label for="cupsName">CUPS Name</label>
+          <label for="cupsName">Имя CUPS</label>
           <input id="cupsName" type="text" [(ngModel)]="newPrinter.cupsName" name="cupsName" placeholder="office-printer" required />
         </div>
         <div class="form-group">
-          <label for="deviceUri">Device URI</label>
+          <label for="deviceUri">URI устройства</label>
           <input id="deviceUri" type="text" [(ngModel)]="newPrinter.deviceUri" name="deviceUri" placeholder="ipp://192.168.1.100/ipp/print" />
         </div>
         <div class="form-group">
-          <label for="driverUri">Driver URI</label>
+          <label for="driverUri">URI драйвера</label>
           <input id="driverUri" type="text" [(ngModel)]="newPrinter.driverUri" name="driverUri" placeholder="everywhere" />
         </div>
         <div class="form-group">
-          <label for="location">Location</label>
-          <input id="location" type="text" [(ngModel)]="newPrinter.location" name="location" placeholder="Room 101" />
+          <label for="location">Расположение</label>
+          <input id="location" type="text" [(ngModel)]="newPrinter.location" name="location" placeholder="Кабинет 101" />
         </div>
         <div class="form-group">
-          <label for="type">Type</label>
+          <label for="type">Тип</label>
           <select id="type" [(ngModel)]="newPrinter.type" name="type">
             @for (t of printerTypes; track t) {
-              <option [value]="t">{{ t }}</option>
+              <option [value]="t">{{ printerTypeLabels[t] }}</option>
             }
           </select>
         </div>
         <div class="form-group">
-          <label for="format">Max Paper Format</label>
+          <label for="format">Макс. формат бумаги</label>
           <select id="format" [(ngModel)]="newPrinter.maxPaperFormat" name="maxPaperFormat">
             @for (f of paperFormats; track f) {
               <option [value]="f">{{ f }}</option>
@@ -47,17 +47,17 @@
           </select>
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn-primary">Add Printer</button>
+          <button type="submit" class="btn-primary">Добавить принтер</button>
         </div>
       </form>
     </div>
   }
 
   @if (loading()) {
-    <div class="loading">Loading printers...</div>
+    <div class="loading">Загрузка принтеров...</div>
   } @else if (printers().length === 0) {
     <div class="empty-state glass">
-      <p>No printers configured yet. Add one to get started.</p>
+      <p>Принтеры ещё не настроены. Добавьте первый принтер.</p>
     </div>
   } @else {
     <div class="printer-grid">
@@ -75,20 +75,20 @@
 
           <div class="printer-details">
             <div class="detail-row">
-              <span class="detail-label">Location</span>
+              <span class="detail-label">Расположение</span>
               <span class="detail-value">{{ printer.location }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Type</span>
+              <span class="detail-label">Тип</span>
               <span class="detail-value">{{ printer.type }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Max Format</span>
+              <span class="detail-label">Макс. формат</span>
               <span class="detail-value">{{ printer.maxPaperFormat }}</span>
             </div>
             @if (printer.tonerLevelPercent !== null) {
               <div class="detail-row">
-                <span class="detail-label">Toner</span>
+                <span class="detail-label">Тонер</span>
                 <div class="level-bar">
                   <div class="level-fill" [style.width.%]="printer.tonerLevelPercent"
                        [class.level-low]="printer.tonerLevelPercent < 20"></div>
@@ -98,7 +98,7 @@
             }
             @if (printer.inkLevelPercent !== null) {
               <div class="detail-row">
-                <span class="detail-label">Ink</span>
+                <span class="detail-label">Чернила</span>
                 <div class="level-bar">
                   <div class="level-fill" [style.width.%]="printer.inkLevelPercent"
                        [class.level-low]="printer.inkLevelPercent < 20"></div>
@@ -108,8 +108,8 @@
             }
             @if (printer.paperRemaining !== null) {
               <div class="detail-row">
-                <span class="detail-label">Paper</span>
-                <span class="detail-value">{{ printer.paperRemaining }} sheets</span>
+                <span class="detail-label">Бумага</span>
+                <span class="detail-value">{{ printer.paperRemaining }} листов</span>
               </div>
             }
           </div>
@@ -117,10 +117,10 @@
           <div class="printer-actions">
             <button class="btn-sm btn-outline" (click)="syncStatus(printer)"
                     [disabled]="syncing() === printer.id">
-              @if (syncing() === printer.id) { Syncing... } @else { Sync Status }
+              @if (syncing() === printer.id) { Синхронизация... } @else { Обновить статус }
             </button>
             <button class="btn-sm btn-danger-outline" (click)="confirmDelete(printer)">
-              Delete
+              Удалить
             </button>
           </div>
         </div>
@@ -131,9 +131,10 @@
 
 @if (deleteTarget()) {
   <app-confirm-dialog
-    title="Delete Printer"
-    [message]="'Are you sure you want to delete ' + deleteTarget()!.name + '?'"
-    confirmLabel="Delete"
+    title="Удаление принтера"
+    [message]="'Вы уверены, что хотите удалить ' + deleteTarget()!.name + '?'"
+    confirmLabel="Удалить"
+    cancelLabel="Отмена"
     (confirmed)="deletePrinter()"
     (cancelled)="deleteTarget.set(null)"
   />

@@ -1,39 +1,39 @@
 <div class="print-jobs-page">
   <div class="page-header">
-    <h1 class="page-title">Print Jobs</h1>
+    <h1 class="page-title">Задания печати</h1>
     <button class="btn-primary" (click)="showCreateForm.set(!showCreateForm())">
-      @if (showCreateForm()) { Cancel } @else { New Print Job }
+      @if (showCreateForm()) { Отмена } @else { Новое задание }
     </button>
   </div>
 
   @if (showCreateForm()) {
     <div class="create-form glass">
-      <h3 class="form-title">Create Print Job</h3>
+      <h3 class="form-title">Создать задание печати</h3>
       <form (ngSubmit)="createJob()" class="form-grid">
         <div class="form-group">
-          <label for="document">Document</label>
+          <label for="document">Документ</label>
           <select id="document" [(ngModel)]="selectedDocumentId" name="documentId" required>
-            <option value="">Select document</option>
+            <option value="">Выберите документ</option>
             @for (doc of documents(); track doc.id) {
               <option [value]="doc.id">{{ doc.originalFileName }}</option>
             }
           </select>
         </div>
         <div class="form-group">
-          <label for="printer">Printer</label>
+          <label for="printer">Принтер</label>
           <select id="printer" [(ngModel)]="selectedPrinterId" name="printerId" required>
-            <option value="">Select printer</option>
+            <option value="">Выберите принтер</option>
             @for (printer of printers(); track printer.id) {
               <option [value]="printer.id">{{ printer.name }} ({{ printer.status }})</option>
             }
           </select>
         </div>
         <div class="form-group">
-          <label for="copies">Copies</label>
+          <label for="copies">Копии</label>
           <input id="copies" type="number" [(ngModel)]="copies" name="copies" min="1" max="100" />
         </div>
         <div class="form-group">
-          <label for="paperFormat">Paper Format</label>
+          <label for="paperFormat">Формат бумаги</label>
           <select id="paperFormat" [(ngModel)]="paperFormat" name="paperFormat">
             @for (f of paperFormats; track f) {
               <option [value]="f">{{ f }}</option>
@@ -41,30 +41,30 @@
           </select>
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn-primary">Print</button>
+          <button type="submit" class="btn-primary">Печать</button>
         </div>
       </form>
     </div>
   }
 
   @if (loading()) {
-    <div class="loading">Loading print jobs...</div>
+    <div class="loading">Загрузка заданий...</div>
   } @else if (printJobs().length === 0) {
     <div class="empty-state glass">
-      <p>No print jobs yet. Upload a document and create a print job.</p>
+      <p>Заданий пока нет. Загрузите документ и создайте задание печати.</p>
     </div>
   } @else {
     <div class="jobs-table-wrapper glass">
       <table class="jobs-table">
         <thead>
           <tr>
-            <th>Document</th>
-            <th>Printer</th>
-            <th>Status</th>
-            <th>Copies</th>
-            <th>Format</th>
-            <th>Created</th>
-            <th>Actions</th>
+            <th>Документ</th>
+            <th>Принтер</th>
+            <th>Статус</th>
+            <th>Копии</th>
+            <th>Формат</th>
+            <th>Создано</th>
+            <th>Действия</th>
           </tr>
         </thead>
         <tbody>
@@ -81,9 +81,9 @@
               <td>{{ job.paperFormat }}</td>
               <td class="cell-date">{{ job.createdAt | date:'short' }}</td>
               <td class="cell-actions">
-                <button class="btn-xs btn-outline" (click)="refreshJob(job)">Refresh</button>
+                <button class="btn-xs btn-outline" (click)="refreshJob(job)">Обновить</button>
                 @if (canCancel(job)) {
-                  <button class="btn-xs btn-danger-outline" (click)="confirmCancel(job)">Cancel</button>
+                  <button class="btn-xs btn-danger-outline" (click)="confirmCancel(job)">Отменить</button>
                 }
               </td>
             </tr>
@@ -96,9 +96,10 @@
 
 @if (cancelTarget()) {
   <app-confirm-dialog
-    title="Cancel Print Job"
-    [message]="'Cancel printing ' + cancelTarget()!.documentName + '?'"
-    confirmLabel="Cancel Job"
+    title="Отмена задания"
+    [message]="'Отменить печать ' + cancelTarget()!.documentName + '?'"
+    confirmLabel="Отменить задание"
+    cancelLabel="Назад"
     (confirmed)="cancelJob()"
     (cancelled)="cancelTarget.set(null)"
   />

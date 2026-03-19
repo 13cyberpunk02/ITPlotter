@@ -1,11 +1,11 @@
 <div class="documents-page">
   <div class="page-header">
-    <h1 class="page-title">Documents</h1>
+    <h1 class="page-title">Документы</h1>
     <label class="btn-primary upload-btn">
       @if (uploading()) {
-        Uploading {{ uploadProgress() }}%
+        Загрузка {{ uploadProgress() }}%
       } @else {
-        Upload Document
+        Загрузить документ
       }
       <input
         type="file"
@@ -24,10 +24,10 @@
   }
 
   @if (loading()) {
-    <div class="loading">Loading documents...</div>
+    <div class="loading">Загрузка документов...</div>
   } @else if (documents().length === 0) {
     <div class="empty-state glass">
-      <p>No documents uploaded yet. Upload a PDF, DOC, or DOCX file to get started.</p>
+      <p>Документы ещё не загружены. Загрузите PDF, DOC или DOCX файл.</p>
     </div>
   } @else {
     <div class="document-list">
@@ -47,14 +47,14 @@
             @if (doc.format === 'Pdf') {
               <button class="btn-sm btn-outline" (click)="optimize(doc)"
                       [disabled]="optimizing() === doc.id">
-                @if (optimizing() === doc.id) { Optimizing... } @else { Optimize }
+                @if (optimizing() === doc.id) { Оптимизация... } @else { Оптимизировать }
               </button>
             }
             <button class="btn-sm btn-outline" (click)="download(doc)">
-              Download
+              Скачать
             </button>
             <button class="btn-sm btn-danger-outline" (click)="confirmDelete(doc)">
-              Delete
+              Удалить
             </button>
           </div>
         </div>
@@ -65,9 +65,10 @@
 
 @if (deleteTarget()) {
   <app-confirm-dialog
-    title="Delete Document"
-    [message]="'Are you sure you want to delete ' + deleteTarget()!.originalFileName + '?'"
-    confirmLabel="Delete"
+    title="Удаление документа"
+    [message]="'Вы уверены, что хотите удалить ' + deleteTarget()!.originalFileName + '?'"
+    confirmLabel="Удалить"
+    cancelLabel="Отмена"
     (confirmed)="deleteDocument()"
     (cancelled)="deleteTarget.set(null)"
   />

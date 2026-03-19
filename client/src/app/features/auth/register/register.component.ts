@@ -38,7 +38,7 @@ export class RegisterComponent {
           this.router.navigate(['/dashboard']);
         },
         error: () => {
-          this.toast.error('Registration failed. Email may already be in use.');
+          this.toast.error('Ошибка регистрации. Возможно, email уже используется.');
           this.loading.set(false);
         },
       });

@@ -9,8 +9,8 @@ import { Component, ChangeDetectionStrategy, input, output } from '@angular/core
 export class ConfirmDialogComponent {
   title = input.required<string>();
   message = input.required<string>();
-  confirmLabel = input('Confirm');
-  cancelLabel = input('Cancel');
+  confirmLabel = input('Подтвердить');
+  cancelLabel = input('Отмена');
 
   confirmed = output<void>();
   cancelled = output<void>();

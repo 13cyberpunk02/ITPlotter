@@ -29,7 +29,7 @@ export class LoginComponent {
         this.router.navigate(['/dashboard']);
       },
       error: () => {
-        this.toast.error('Invalid email or password');
+        this.toast.error('Неверный email или пароль');
         this.loading.set(false);
       },
     });
