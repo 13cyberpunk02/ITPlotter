@@ -82,7 +82,8 @@ public class AutoPrintService
                     Copies = 1,
                     PaperFormat = requiredFormat,
                     WidthMm = file.ResultWidthMm,
-                    LengthMm = file.ResultLengthMm
+                    LengthMm = file.ResultLengthMm,
+                    IsRollPaper = printer.Type == PrinterType.Plotter
                 }, ct);
 
             var printJob = new PrintJob

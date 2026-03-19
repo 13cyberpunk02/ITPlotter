@@ -126,36 +126,79 @@ public class PdfProcessor
     private void CreateAsIsPdf(PlotterPrintJob job, string outputPath)
     {
         var doc = job.SourceDocuments.First();
-        using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
-        using var output = new PdfDocument();
-        var page = output.AddPage(sourceDoc.Pages[doc.PageIndex]);
-        NormalizePageBox(page);
-        output.Save(outputPath);
+        // Создаём новую страницу с точными размерами из детектированного формата.
+        // Исходный PDF может иметь MediaBox намного больше (A0 artboard в AutoCAD),
+        // а драйвер плоттера берёт размер страницы из PDF, игнорируя CUPS media.
+        CreateNormalizedPage(doc, outputPath, landscape: false);
     }
 
     private void CreateRotatedPdf(PlotterPrintJob job, string outputPath)
     {
         var doc = job.SourceDocuments.First();
-        using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
-        var sourcePage = sourceDoc.Pages[doc.PageIndex];
+        CreateNormalizedPage(doc, outputPath, landscape: true);
+    }
 
-        using var output = new PdfDocument();
-        var page = output.AddPage(sourcePage);
-        NormalizePageBox(page);
+    /// <summary>
+    /// Создаёт PDF с одной страницей точных размеров (из детекции формата),
+    /// рисуя содержимое исходной страницы через XPdfForm с масштабированием и центрированием.
+    /// </summary>
+    private void CreateNormalizedPage(DetectedDocument doc, string outputPath, bool landscape)
+    {
+        // Целевые размеры страницы из детектированного формата (в pt)
+        double shortSidePt = Math.Min(doc.ActualWidthPt, doc.ActualHeightPt);
+        double longSidePt = Math.Max(doc.ActualWidthPt, doc.ActualHeightPt);
 
-        double wPt = page.Width.Point;
-        double hPt = page.Height.Point;
-        int rot = page.Rotate;
-
-        var (visW, visH) = GetVisualSize(wPt, hPt, rot);
-        bool isVisualLandscape = visW > visH;
-
-        if (!isVisualLandscape)
+        double targetW, targetH;
+        if (landscape)
         {
-            page.Rotate = (rot + 90) % 360;
+            targetW = longSidePt;
+            targetH = shortSidePt;
+        }
+        else
+        {
+            targetW = shortSidePt;
+            targetH = longSidePt;
         }
 
-        output.Save(outputPath);
+        string tempPath = Path.Combine(Path.GetTempPath(), $"norm_{Guid.NewGuid():N}.pdf");
+        try
+        {
+            // Сохраняем исходную страницу для загрузки как XPdfForm
+            using (var source = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import))
+            using (var tempDoc = new PdfDocument())
+            {
+                tempDoc.AddPage(source.Pages[doc.PageIndex]);
+                tempDoc.Save(tempPath);
+            }
+
+            using var form = XPdfForm.FromFile(tempPath);
+            using var output = new PdfDocument();
+            var newPage = output.AddPage();
+            newPage.Width = new XUnit(targetW, XGraphicsUnit.Point);
+            newPage.Height = new XUnit(targetH, XGraphicsUnit.Point);
+
+            using var gfx = XGraphics.FromPdfPage(newPage);
+
+            // Масштабируем форму чтобы вписать в целевую страницу, с центрированием
+            double formW = form.PointWidth;
+            double formH = form.PointHeight;
+
+            double scaleX = targetW / formW;
+            double scaleY = targetH / formH;
+            double scale = Math.Min(scaleX, scaleY);
+
+            double drawW = formW * scale;
+            double drawH = formH * scale;
+            double drawX = (targetW - drawW) / 2;
+            double drawY = (targetH - drawH) / 2;
+
+            gfx.DrawImage(form, drawX, drawY, drawW, drawH);
+            output.Save(outputPath);
+        }
+        finally
+        {
+            TryDelete(tempPath);
+        }
     }
 
     private void CreateSideBySidePdf(PlotterPrintJob job, string outputPath, string tempDir)
