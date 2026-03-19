@@ -130,7 +130,7 @@ public class CupsApiService : ICupsService
             }
 
             var rollOpts = options.IsRollPaper ? " -o media-source=roll" : "";
-            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={mediaValue}{rollOpts} -o print-scaling=fit -o position=center -t \"{fileName}\" {tempFile}";
+            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={mediaValue}{rollOpts} -o print-scaling=none -o position=center -t \"{fileName}\" {tempFile}";
             _logger.LogInformation("CUPS lp: {Args}", args);
             var (exitCode, output) = await RunCommandAsync("lp", args, ct);
 

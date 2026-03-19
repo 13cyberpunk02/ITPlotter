@@ -126,79 +126,29 @@ public class PdfProcessor
     private void CreateAsIsPdf(PlotterPrintJob job, string outputPath)
     {
         var doc = job.SourceDocuments.First();
-        // Создаём новую страницу с точными размерами из детектированного формата.
-        // Исходный PDF может иметь MediaBox намного больше (A0 artboard в AutoCAD),
-        // а драйвер плоттера берёт размер страницы из PDF, игнорируя CUPS media.
-        CreateNormalizedPage(doc, outputPath, landscape: false);
+        using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
+        using var output = new PdfDocument();
+        output.AddPage(sourceDoc.Pages[doc.PageIndex]);
+        output.Save(outputPath);
     }
 
     private void CreateRotatedPdf(PlotterPrintJob job, string outputPath)
     {
         var doc = job.SourceDocuments.First();
-        CreateNormalizedPage(doc, outputPath, landscape: true);
-    }
+        using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
+        using var output = new PdfDocument();
+        var page = output.AddPage(sourceDoc.Pages[doc.PageIndex]);
 
-    /// <summary>
-    /// Создаёт PDF с одной страницей точных размеров (из детекции формата),
-    /// рисуя содержимое исходной страницы через XPdfForm с масштабированием и центрированием.
-    /// </summary>
-    private void CreateNormalizedPage(DetectedDocument doc, string outputPath, bool landscape)
-    {
-        // Целевые размеры страницы из детектированного формата (в pt)
-        double shortSidePt = Math.Min(doc.ActualWidthPt, doc.ActualHeightPt);
-        double longSidePt = Math.Max(doc.ActualWidthPt, doc.ActualHeightPt);
+        double wPt = page.Width.Point;
+        double hPt = page.Height.Point;
+        int rot = page.Rotate;
 
-        double targetW, targetH;
-        if (landscape)
-        {
-            targetW = longSidePt;
-            targetH = shortSidePt;
-        }
-        else
-        {
-            targetW = shortSidePt;
-            targetH = longSidePt;
-        }
+        bool isEffectiveLandscape = (rot == 90 || rot == 270) ? hPt > wPt : wPt > hPt;
 
-        string tempPath = Path.Combine(Path.GetTempPath(), $"norm_{Guid.NewGuid():N}.pdf");
-        try
-        {
-            // Сохраняем исходную страницу для загрузки как XPdfForm
-            using (var source = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import))
-            using (var tempDoc = new PdfDocument())
-            {
-                tempDoc.AddPage(source.Pages[doc.PageIndex]);
-                tempDoc.Save(tempPath);
-            }
+        if (!isEffectiveLandscape)
+            page.Rotate = (page.Rotate + 90) % 360;
 
-            using var form = XPdfForm.FromFile(tempPath);
-            using var output = new PdfDocument();
-            var newPage = output.AddPage();
-            newPage.Width = new XUnit(targetW, XGraphicsUnit.Point);
-            newPage.Height = new XUnit(targetH, XGraphicsUnit.Point);
-
-            using var gfx = XGraphics.FromPdfPage(newPage);
-
-            // Масштабируем форму чтобы вписать в целевую страницу, с центрированием
-            double formW = form.PointWidth;
-            double formH = form.PointHeight;
-
-            double scaleX = targetW / formW;
-            double scaleY = targetH / formH;
-            double scale = Math.Min(scaleX, scaleY);
-
-            double drawW = formW * scale;
-            double drawH = formH * scale;
-            double drawX = (targetW - drawW) / 2;
-            double drawY = (targetH - drawH) / 2;
-
-            gfx.DrawImage(form, drawX, drawY, drawW, drawH);
-            output.Save(outputPath);
-        }
-        finally
-        {
-            TryDelete(tempPath);
-        }
+        output.Save(outputPath);
     }
 
     private void CreateSideBySidePdf(PlotterPrintJob job, string outputPath, string tempDir)
@@ -352,42 +302,6 @@ public class PdfProcessor
     private record PageDrawInfo(
         string StrippedPath, double FormW, double FormH,
         int EffectiveRotation, double SlotW, double SlotH);
-
-    /// <summary>
-    /// Обрезает MediaBox до CropBox/TrimBox, если те меньше.
-    /// AutoCAD часто создаёт PDF с огромным MediaBox (A0 artboard),
-    /// а реальный чертёж задаёт через CropBox/TrimBox.
-    /// </summary>
-    private static void NormalizePageBox(PdfPage page)
-    {
-        PdfRectangle? bestBox = null;
-
-        try
-        {
-            var cropBox = page.CropBox;
-            if (cropBox.Width > 0 && cropBox.Height > 0 &&
-                (cropBox.Width < page.MediaBox.Width - 1 || cropBox.Height < page.MediaBox.Height - 1))
-            {
-                bestBox = cropBox;
-            }
-        }
-        catch { }
-
-        try
-        {
-            var trimBox = page.TrimBox;
-            if (trimBox.Width > 0 && trimBox.Height > 0 &&
-                (trimBox.Width < page.MediaBox.Width - 1 || trimBox.Height < page.MediaBox.Height - 1))
-            {
-                if (bestBox == null || trimBox.Width * trimBox.Height < bestBox.Width * bestBox.Height)
-                    bestBox = trimBox;
-            }
-        }
-        catch { }
-
-        if (bestBox != null)
-            page.MediaBox = bestBox;
-    }
 
     private static void TryDelete(string path)
     {
