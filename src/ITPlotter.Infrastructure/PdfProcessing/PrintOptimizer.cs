@@ -156,15 +156,17 @@ public class PrintOptimizer
 
         if (i < docs.Count)
         {
+            // Одиночный лист — печатаем портретом без поворота:
+            // короткая сторона поперёк рулона, длинная — по подаче.
             jobs.Add(new PlotterPrintJob
             {
                 JobNumber = ++_jobCounter,
                 Strategy = PrintStrategy.RotateAndMergeDuplicates,
-                Description = $"{format.Name} — одиночный, повёрнут",
+                Description = $"{format.Name} — одиночный",
                 SourceDocuments = [docs[i]],
-                ResultWidthOnRollMm = longSide,
-                ResultLengthOnRollMm = shortSide,
-                RequiresRotation = true,
+                ResultWidthOnRollMm = shortSide,
+                ResultLengthOnRollMm = longSide,
+                RequiresRotation = false,
                 IsMergedSideBySide = false
             });
         }
