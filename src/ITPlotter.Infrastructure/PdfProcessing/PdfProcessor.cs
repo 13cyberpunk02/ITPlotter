@@ -137,16 +137,47 @@ public class PdfProcessor
         var doc = job.SourceDocuments.First();
         using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
         using var output = new PdfDocument();
-        var page = output.AddPage(sourceDoc.Pages[doc.PageIndex]);
+        var sourcePage = sourceDoc.Pages[doc.PageIndex];
 
-        double wPt = page.Width.Point;
-        double hPt = page.Height.Point;
-        int rot = page.Rotate;
+        double wPt = sourcePage.Width.Point;
+        double hPt = sourcePage.Height.Point;
+        int rot = sourcePage.Rotate;
 
+        // Определяем эффективную ориентацию с учётом текущего Rotate
         bool isEffectiveLandscape = (rot == 90 || rot == 270) ? hPt > wPt : wPt > hPt;
 
-        if (!isEffectiveLandscape)
-            page.Rotate = (page.Rotate + 90) % 360;
+        if (isEffectiveLandscape)
+        {
+            // Уже ландшафт — копируем как есть
+            output.AddPage(sourcePage);
+        }
+        else
+        {
+            // Портрет → рисуем на новую страницу с поменянными W/H
+            // Так драйвер плоттера видит реальные размеры страницы
+            var (visW, visH) = GetVisualSize(wPt, hPt, rot);
+            var newPage = output.AddPage();
+            newPage.Width = new XUnit(visH, XGraphicsUnit.Point);  // длинная сторона = ширина
+            newPage.Height = new XUnit(visW, XGraphicsUnit.Point); // короткая = высота
+
+            string tempPath = Path.Combine(Path.GetTempPath(), $"rot_{Guid.NewGuid():N}.pdf");
+            try
+            {
+                using var tempDoc = new PdfDocument();
+                var tp = tempDoc.AddPage(sourcePage);
+                tp.Rotate = 0;
+                tempDoc.Save(tempPath);
+
+                using var form = XPdfForm.FromFile(tempPath);
+                using var gfx = XGraphics.FromPdfPage(newPage);
+                DrawFormWithRotation(gfx, form, (rot + 90) % 360,
+                    0, 0, newPage.Width.Point, newPage.Height.Point);
+            }
+            finally
+            {
+                TryDelete(tempPath);
+            }
+        }
 
         output.Save(outputPath);
     }
