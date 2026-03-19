@@ -86,11 +86,10 @@ public class CupsApiService : ICupsService
         if (exitCode != 0)
             throw new InvalidOperationException($"Не удалось добавить принтер в CUPS: {output}");
 
-        // Сбрасываем default media — для рулонных плоттеров IPP Everywhere
-        // ставит A0 по умолчанию, что приводит к масштабированию мелких форматов.
-        // Устанавливаем минимальный custom размер, чтобы драйвер брал размер из PDF.
+        // Сбрасываем default: print-scaling=none чтобы не масштабировать контент,
+        // media=iso_a4 чтобы не было default A0 (каждое задание передаёт свой media).
         await RunCommandAsync("lpadmin",
-            $"-h {_cupsServer} -p {printerName} -o media=custom_210x297mm", ct);
+            $"-h {_cupsServer} -p {printerName} -o print-scaling=none -o media=iso_a4_210x297mm", ct);
 
         _logger.LogInformation("Принтер {Printer} добавлен в CUPS", printerName);
     }
@@ -113,21 +112,25 @@ public class CupsApiService : ICupsService
                 await fileStream.CopyToAsync(fs, ct);
             }
 
-            // Для оптимизированных PDF (размеры заданы) — не передаём media,
-            // драйвер плоттера сам возьмёт PageSize из PDF.
-            // Для обычной печати (ручной) — передаём media.
-            string mediaOption;
+            // Всегда передаём media — без него CUPS берёт default принтера (часто A0).
+            // Для оптимизированных PDF используем точные размеры из пайплайна.
+            // Для ручной печати — стандартный формат.
+            string mediaValue;
             if (options.WidthMm.HasValue && options.LengthMm.HasValue)
             {
-                // PDF уже оптимизирован (повёрнут/склеен), размеры страницы в PDF корректны
-                mediaOption = "";
+                // Размеры оптимизированного PDF: ширина по рулону, длина — расход рулона.
+                // PWG custom format: ширина ≤ высота, поэтому min x max
+                var w = Math.Min(options.WidthMm.Value, options.LengthMm.Value);
+                var h = Math.Max(options.WidthMm.Value, options.LengthMm.Value);
+                mediaValue = $"custom_{w:F0}x{h:F0}mm";
             }
             else
             {
-                mediaOption = $"-o media={PaperFormatToCupsMedia(options.PaperFormat)}";
+                mediaValue = PaperFormatToCupsMedia(options.PaperFormat);
             }
 
-            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} {mediaOption} -o scaling=100 -o position=center -t \"{fileName}\" {tempFile}";
+            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={mediaValue} -o print-scaling=none -o position=center -t \"{fileName}\" {tempFile}";
+            _logger.LogInformation("CUPS lp: {Args}", args);
             var (exitCode, output) = await RunCommandAsync("lp", args, ct);
 
             if (exitCode != 0)
