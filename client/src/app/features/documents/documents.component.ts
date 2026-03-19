@@ -58,12 +58,12 @@ export class DocumentsComponent implements OnInit {
             this.documents.update(list => [doc, ...list]);
           }
           this.uploading.set(false);
-          this.toast.success('Document uploaded');
+          this.toast.success('Документ загружен');
         }
       },
       error: () => {
         this.uploading.set(false);
-        this.toast.error('Upload failed');
+        this.toast.error('Ошибка загрузки');
       },
     });
     input.value = '';
@@ -81,24 +81,24 @@ export class DocumentsComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => this.toast.error('Download failed'),
+      error: () => this.toast.error('Ошибка скачивания'),
     });
   }
 
   optimize(doc: DocumentDto): void {
     if (doc.format !== 'Pdf') {
-      this.toast.error('Only PDF documents can be optimized');
+      this.toast.error('Оптимизация доступна только для PDF');
       return;
     }
     this.optimizing.set(doc.id);
     this.optimizationService.optimize(doc.id).subscribe({
       next: () => {
         this.optimizing.set(null);
-        this.toast.success('Document optimized for plotting');
+        this.toast.success('Документ оптимизирован для плоттера');
       },
       error: () => {
         this.optimizing.set(null);
-        this.toast.error('Optimization failed');
+        this.toast.error('Ошибка оптимизации');
       },
     });
   }
@@ -114,11 +114,11 @@ export class DocumentsComponent implements OnInit {
       next: () => {
         this.documents.update(list => list.filter(d => d.id !== target.id));
         this.deleteTarget.set(null);
-        this.toast.success('Document deleted');
+        this.toast.success('Документ удалён');
       },
       error: () => {
         this.deleteTarget.set(null);
-        this.toast.error('Failed to delete document');
+        this.toast.error('Не удалось удалить документ');
       },
     });
   }

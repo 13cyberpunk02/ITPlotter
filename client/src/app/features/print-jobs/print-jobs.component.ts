@@ -72,9 +72,9 @@ export class PrintJobsComponent implements OnInit {
         this.printJobs.update(list => [job, ...list]);
         this.showCreateForm.set(false);
         this.resetForm();
-        this.toast.success('Print job created');
+        this.toast.success('Задание создано');
       },
-      error: () => this.toast.error('Failed to create print job'),
+      error: () => this.toast.error('Не удалось создать задание'),
     });
   }
 
@@ -101,11 +101,11 @@ export class PrintJobsComponent implements OnInit {
           list.map(j => (j.id === target.id ? { ...j, status: 'Cancelled' as const } : j))
         );
         this.cancelTarget.set(null);
-        this.toast.success('Print job cancelled');
+        this.toast.success('Задание отменено');
       },
       error: () => {
         this.cancelTarget.set(null);
-        this.toast.error('Failed to cancel print job');
+        this.toast.error('Не удалось отменить задание');
       },
     });
   }

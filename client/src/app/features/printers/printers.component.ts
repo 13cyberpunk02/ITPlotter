@@ -40,6 +40,11 @@ export class PrintersComponent implements OnInit {
   readonly printerTypes: PrinterType[] = ['Printer', 'Plotter'];
   readonly paperFormats: PaperFormat[] = ['A4', 'A3', 'A2', 'A1', 'A0'];
 
+  readonly printerTypeLabels: Record<PrinterType, string> = {
+    Printer: 'Принтер',
+    Plotter: 'Плоттер',
+  };
+
   ngOnInit(): void {
     this.loadPrinters();
   }
@@ -61,9 +66,9 @@ export class PrintersComponent implements OnInit {
         this.printers.update(list => [...list, printer]);
         this.showAddForm.set(false);
         this.resetForm();
-        this.toast.success('Printer added successfully');
+        this.toast.success('Принтер добавлен');
       },
-      error: () => this.toast.error('Failed to add printer'),
+      error: () => this.toast.error('Не удалось добавить принтер'),
     });
   }
 
@@ -77,13 +82,13 @@ export class PrintersComponent implements OnInit {
               list.map(p => (p.id === updated.id ? updated : p))
             );
             this.syncing.set(null);
-            this.toast.success('Status synced');
+            this.toast.success('Статус обновлён');
           },
         });
       },
       error: () => {
         this.syncing.set(null);
-        this.toast.error('Failed to sync status');
+        this.toast.error('Не удалось обновить статус');
       },
     });
   }
@@ -99,11 +104,11 @@ export class PrintersComponent implements OnInit {
       next: () => {
         this.printers.update(list => list.filter(p => p.id !== target.id));
         this.deleteTarget.set(null);
-        this.toast.success('Printer deleted');
+        this.toast.success('Принтер удалён');
       },
       error: () => {
         this.deleteTarget.set(null);
-        this.toast.error('Failed to delete printer');
+        this.toast.error('Не удалось удалить принтер');
       },
     });
   }

@@ -2,7 +2,7 @@
   type="button"
   class="toggle-btn"
   (click)="themeService.toggle()"
-  [attr.aria-label]="themeService.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+  [attr.aria-label]="themeService.theme() === 'dark' ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'"
 >
   @if (themeService.theme() === 'dark') {
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

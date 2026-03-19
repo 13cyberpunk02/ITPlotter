@@ -1,8 +1,8 @@
 <div class="dashboard">
-  <h1 class="page-title">Dashboard</h1>
+  <h1 class="page-title">Панель управления</h1>
 
   @if (loading()) {
-    <div class="loading">Loading...</div>
+    <div class="loading">Загрузка...</div>
   } @else {
     <div class="stats-grid">
       <a routerLink="/printers" class="stat-card glass">
@@ -11,9 +11,9 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ printers().length }}</span>
-          <span class="stat-label">Printers</span>
+          <span class="stat-label">Принтеры</span>
         </div>
-        <span class="stat-detail">{{ onlinePrinters }} online</span>
+        <span class="stat-detail">{{ onlinePrinters }} в сети</span>
       </a>
 
       <a routerLink="/documents" class="stat-card glass">
@@ -22,7 +22,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ documents().length }}</span>
-          <span class="stat-label">Documents</span>
+          <span class="stat-label">Документы</span>
         </div>
       </a>
 
@@ -32,17 +32,17 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ printJobs().length }}</span>
-          <span class="stat-label">Print Jobs</span>
+          <span class="stat-label">Задания печати</span>
         </div>
-        <span class="stat-detail">{{ activePrintJobs }} active</span>
+        <span class="stat-detail">{{ activePrintJobs }} активных</span>
       </a>
     </div>
 
     <div class="sections-grid">
       <section class="section-card glass">
-        <h2 class="section-title">Printer Status</h2>
+        <h2 class="section-title">Статус принтеров</h2>
         @if (printers().length === 0) {
-          <p class="empty-text">No printers configured</p>
+          <p class="empty-text">Принтеры не настроены</p>
         } @else {
           <div class="printer-list">
             @for (printer of printers(); track printer.id) {
@@ -61,9 +61,9 @@
       </section>
 
       <section class="section-card glass">
-        <h2 class="section-title">Recent Print Jobs</h2>
+        <h2 class="section-title">Последние задания</h2>
         @if (recentJobs.length === 0) {
-          <p class="empty-text">No print jobs yet</p>
+          <p class="empty-text">Заданий пока нет</p>
         } @else {
           <div class="job-list">
             @for (job of recentJobs; track job.id) {
