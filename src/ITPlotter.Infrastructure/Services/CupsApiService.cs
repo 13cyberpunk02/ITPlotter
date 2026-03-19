@@ -121,7 +121,7 @@ public class CupsApiService : ICupsService
                 cupsMedia = PaperFormatToCupsMedia(options.PaperFormat);
             }
 
-            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={cupsMedia} -o fit-to-page -o position=center -t \"{fileName}\" {tempFile}";
+            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={cupsMedia} -o scaling=100 -o position=center -t \"{fileName}\" {tempFile}";
             var (exitCode, output) = await RunCommandAsync("lp", args, ct);
 
             if (exitCode != 0)
