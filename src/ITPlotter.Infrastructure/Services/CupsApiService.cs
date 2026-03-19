@@ -86,6 +86,12 @@ public class CupsApiService : ICupsService
         if (exitCode != 0)
             throw new InvalidOperationException($"Не удалось добавить принтер в CUPS: {output}");
 
+        // Сбрасываем default media — для рулонных плоттеров IPP Everywhere
+        // ставит A0 по умолчанию, что приводит к масштабированию мелких форматов.
+        // Устанавливаем минимальный custom размер, чтобы драйвер брал размер из PDF.
+        await RunCommandAsync("lpadmin",
+            $"-h {_cupsServer} -p {printerName} -o media=custom_210x297mm", ct);
+
         _logger.LogInformation("Принтер {Printer} добавлен в CUPS", printerName);
     }
 
@@ -107,21 +113,21 @@ public class CupsApiService : ICupsService
                 await fileStream.CopyToAsync(fs, ct);
             }
 
-            // Если заданы реальные размеры оптимизированного PDF — используем custom media
-            // Это важно для рулонных плоттеров: PDF уже повёрнут/склеен оптимизатором
-            string cupsMedia;
+            // Для оптимизированных PDF (размеры заданы) — не передаём media,
+            // драйвер плоттера сам возьмёт PageSize из PDF.
+            // Для обычной печати (ручной) — передаём media.
+            string mediaOption;
             if (options.WidthMm.HasValue && options.LengthMm.HasValue)
             {
-                var w = (int)Math.Ceiling(options.WidthMm.Value);
-                var l = (int)Math.Ceiling(options.LengthMm.Value);
-                cupsMedia = $"custom_{w}x{l}mm";
+                // PDF уже оптимизирован (повёрнут/склеен), размеры страницы в PDF корректны
+                mediaOption = "";
             }
             else
             {
-                cupsMedia = PaperFormatToCupsMedia(options.PaperFormat);
+                mediaOption = $"-o media={PaperFormatToCupsMedia(options.PaperFormat)}";
             }
 
-            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={cupsMedia} -o scaling=100 -o position=center -t \"{fileName}\" {tempFile}";
+            var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} {mediaOption} -o scaling=100 -o position=center -t \"{fileName}\" {tempFile}";
             var (exitCode, output) = await RunCommandAsync("lp", args, ct);
 
             if (exitCode != 0)
