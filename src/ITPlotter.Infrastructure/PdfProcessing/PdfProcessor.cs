@@ -128,7 +128,8 @@ public class PdfProcessor
         var doc = job.SourceDocuments.First();
         using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
         using var output = new PdfDocument();
-        output.AddPage(sourceDoc.Pages[doc.PageIndex]);
+        var page = output.AddPage(sourceDoc.Pages[doc.PageIndex]);
+        NormalizePageBox(page);
         output.Save(outputPath);
     }
 
@@ -138,29 +139,19 @@ public class PdfProcessor
         using var sourceDoc = PdfReader.Open(doc.FilePath, PdfDocumentOpenMode.Import);
         var sourcePage = sourceDoc.Pages[doc.PageIndex];
 
-        double wPt = sourcePage.Width.Point;
-        double hPt = sourcePage.Height.Point;
-        int rot = sourcePage.Rotate;
+        using var output = new PdfDocument();
+        var page = output.AddPage(sourcePage);
+        NormalizePageBox(page);
 
-        // Визуальные размеры с учётом Rotate
+        double wPt = page.Width.Point;
+        double hPt = page.Height.Point;
+        int rot = page.Rotate;
+
         var (visW, visH) = GetVisualSize(wPt, hPt, rot);
-
-        // Определяем: визуально ландшафт или портрет
         bool isVisualLandscape = visW > visH;
 
-        using var output = new PdfDocument();
-
-        if (isVisualLandscape)
+        if (!isVisualLandscape)
         {
-            // Уже визуально ландшафт — копируем страницу как есть.
-            // CUPS получит explicit media size, поэтому Rotate флаг не мешает.
-            output.AddPage(sourcePage);
-        }
-        else
-        {
-            // Визуально портрет — добавляем поворот через Rotate флаг.
-            // Это поворачивает всю страницу целиком (и фон, и чертёж).
-            var page = output.AddPage(sourcePage);
             page.Rotate = (rot + 90) % 360;
         }
 
@@ -318,6 +309,42 @@ public class PdfProcessor
     private record PageDrawInfo(
         string StrippedPath, double FormW, double FormH,
         int EffectiveRotation, double SlotW, double SlotH);
+
+    /// <summary>
+    /// Обрезает MediaBox до CropBox/TrimBox, если те меньше.
+    /// AutoCAD часто создаёт PDF с огромным MediaBox (A0 artboard),
+    /// а реальный чертёж задаёт через CropBox/TrimBox.
+    /// </summary>
+    private static void NormalizePageBox(PdfPage page)
+    {
+        PdfRectangle? bestBox = null;
+
+        try
+        {
+            var cropBox = page.CropBox;
+            if (cropBox.Width > 0 && cropBox.Height > 0 &&
+                (cropBox.Width < page.MediaBox.Width - 1 || cropBox.Height < page.MediaBox.Height - 1))
+            {
+                bestBox = cropBox;
+            }
+        }
+        catch { }
+
+        try
+        {
+            var trimBox = page.TrimBox;
+            if (trimBox.Width > 0 && trimBox.Height > 0 &&
+                (trimBox.Width < page.MediaBox.Width - 1 || trimBox.Height < page.MediaBox.Height - 1))
+            {
+                if (bestBox == null || trimBox.Width * trimBox.Height < bestBox.Width * bestBox.Height)
+                    bestBox = trimBox;
+            }
+        }
+        catch { }
+
+        if (bestBox != null)
+            page.MediaBox = bestBox;
+    }
 
     private static void TryDelete(string path)
     {
