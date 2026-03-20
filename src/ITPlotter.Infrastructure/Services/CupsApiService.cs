@@ -113,21 +113,9 @@ public class CupsApiService : ICupsService
             }
 
             // Всегда передаём media — без него CUPS берёт default принтера (часто A0).
-            // Для оптимизированных PDF используем точные размеры из пайплайна.
-            // Для ручной печати — стандартный формат.
-            string mediaValue;
-            if (options.WidthMm.HasValue && options.LengthMm.HasValue)
-            {
-                // Размеры оптимизированного PDF: ширина по рулону, длина — расход рулона.
-                // PWG custom format: ширина ≤ высота, поэтому min x max
-                var w = Math.Min(options.WidthMm.Value, options.LengthMm.Value);
-                var h = Math.Max(options.WidthMm.Value, options.LengthMm.Value);
-                mediaValue = $"custom_{w:F0}x{h:F0}mm";
-            }
-            else
-            {
-                mediaValue = PaperFormatToCupsMedia(options.PaperFormat);
-            }
+            // Для стандартных форматов (A4, A3, A2, A1, A0) — используем iso_ название.
+            // Для нестандартных (склеенные, extended) — PaperFormatToCupsMedia сам вернёт custom_.
+            string mediaValue = PaperFormatToCupsMedia(options.PaperFormat);
 
             var rollOpts = options.IsRollPaper ? " -o media-source=roll" : "";
             var args = $"-h {_cupsServer} -d {printerName} -n {options.Copies} -o media={mediaValue}{rollOpts} -o print-scaling=none -o position=center -t \"{fileName}\" {tempFile}";
