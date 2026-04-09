@@ -80,7 +80,7 @@ public class CupsApiService : ICupsService
     public async Task AddPrinterAsync(string printerName, string deviceUri, string driverUri, CancellationToken ct = default)
     {
         var driver = string.IsNullOrWhiteSpace(driverUri) ? "everywhere" : driverUri;
-        var args = $"-h {_cupsServer} -p {printerName} -v {deviceUri} -m {driver} -E";
+        var args = $"-h {_cupsServer} -p {printerName} -v \"{deviceUri}\" -m {driver} -E";
 
         var (exitCode, output) = await RunCommandAsync("lpadmin", args, ct);
         if (exitCode != 0)
