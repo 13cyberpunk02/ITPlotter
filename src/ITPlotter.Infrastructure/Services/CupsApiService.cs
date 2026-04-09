@@ -79,8 +79,14 @@ public class CupsApiService : ICupsService
 
     public async Task AddPrinterAsync(string printerName, string deviceUri, string driverUri, CancellationToken ct = default)
     {
-        var driver = string.IsNullOrWhiteSpace(driverUri) ? "everywhere" : driverUri;
         var encodedUri = deviceUri.Replace(" ", "%20");
+
+        // everywhere (IPP Everywhere) работает только с ipp:// / ipps://
+        // Для SMB и других протоколов используем raw
+        var driver = string.IsNullOrWhiteSpace(driverUri)
+            ? (encodedUri.StartsWith("smb://", StringComparison.OrdinalIgnoreCase) ? "raw" : "everywhere")
+            : driverUri;
+
         var args = $"-h {_cupsServer} -p {printerName} -v \"{encodedUri}\" -m {driver} -E";
 
         var (exitCode, output) = await RunCommandAsync("lpadmin", args, ct);
